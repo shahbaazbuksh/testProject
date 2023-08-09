@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Rest API Project</title>
+  </head>
+  <body>
+    <form id="item-form">
+      <label>Item Name:</label>
+      <input type="text" name="" id="item-name" />
+      <label>Description:</label>
+      <input type="text" name="" id="item-desc" />
+      <label>Price:</label>
+      <input type="number" name="" id="item-pric" />
+      <label>Quantity:</label>
+      <input type="number" name="" id="item-quan" />
+      <button type="submit">Add Item</button>
+    </form>
+    <div id="container"></div>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/axios/1.4.0/axios.min.js"></script>
+    <script>
+      const itemForm = document.querySelector("#item-form");
+      const itemName = document.querySelector("#item-name");
+      const itemDesc = document.querySelector("#item-desc");
+      const itemPric = document.querySelector("#item-pric");
+      const itemQuan = document.querySelector("#item-quan");
+      const divContainer = document.querySelector("#container");
+
+      function onAddItemSubmit(e) {
+        e.preventDefault();
+        const data = {
+          name: itemName.value,
+          desc: itemDesc.value,
+          pric: itemPric.value,
+          quan: itemQuan.value,
+        };
+        addItemToServer(data);
+        itemName.value = "";
+        itemDesc.value = "";
+        itemPric.value = "";
+        itemQuan.value = "";
+      }
+
+      function addItemToServer(item) {
+        axios
+          .post(
+            "https://crudcrud.com/api/cf03e4de3736453187316a728c8cae89/itemList",
+            item
+          )
+          .then((res) => addItemToDOM(res.data));
+      }
+
+      function addItemToDOM(item) {
+        const p = document.createElement("p");
+        p.appendChild(
+          document.createTextNode(
+            `Name: ${item.name}, Description: ${item.desc}, Price: Rs${item.pric}, Quantity: ${item.quan}`
+          )
+        );
+        const buy1 = document.createElement("button");
+        buy1.appendChild(document.createTextNode("Buy 1"));
+        buy1.className = "buy1";
+        p.appendChild(buy1);
+        const buy2 = document.createElement("button");
+        buy2.appendChild(document.createTextNode("Buy 2"));
+        buy2.className = "buy2";
+        p.appendChild(buy2);
+        const buy3 = document.createElement("button");
+        buy3.appendChild(document.createTextNode("Buy 3"));
+        buy3.className = "buy3";
+        p.appendChild(buy3);
+        p.itemId = item._id;
+        divContainer.appendChild(p);
+        buy1.addEventListener("click", updateItem);
+        buy2.addEventListener("click", updateItem);
+        buy3.addEventListener("click", updateItem);
+      }
+
+      function updateItem(e) {
+        const itemToEdit = e.target.parentElement.itemId;
+        axios
+          .get(
+            `https://crudcrud.com/api/cf03e4de3736453187316a728c8cae89/itemList/${itemToEdit}`
+          )
+          .then((res) => {
+            let updatedQuan = Number(res.data.quan);
+            if (e.target.classList.contains("buy1")) {
+              updatedQuan--;
+            } else if (e.target.classList.contains("buy2")) {
+              updatedQuan -= 2;
+            } else if (e.target.classList.contains("buy3")) {
+              updatedQuan -= 3;
+            }
+            const data = {
+              name: res.data.name,
+              desc: res.data.desc,
+              pric: res.data.pric,
+              quan: updatedQuan,
+            };
+            axios
+              .put(
+                `https://crudcrud.com/api/cf03e4de3736453187316a728c8cae89/itemList/${itemToEdit}`,
+                data
+              )
+              .then((res) => {
+                divContainer.innerHTML = "";
+                displayItems();
+              });
+          });
+      }
+
+      function displayItems() {
+        axios
+          .get(
+            "https://crudcrud.com/api/cf03e4de3736453187316a728c8cae89/itemList"
+          )
+          .then((res) => {
+            res.data.forEach((item) => {
+              addItemToDOM(item);
+            });
+          });
+      }
+
+      function init() {
+        itemForm.addEventListener("submit", onAddItemSubmit);
+        document.addEventListener("DOMContentLoaded", displayItems);
+      }
+      init();
+    </script>
+  </body>
+</html>
